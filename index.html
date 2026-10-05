@@ -1,153 +1,57 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="pt-BR">
 
 <head>
-
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <title>REG. FOTO</title>
 
-
   <style>
-
     body {
-
-      margin: 0;
-
-      padding: 20px;
-
       font-family: Arial, sans-serif;
-
-      background: #f5f5f5;
-
       text-align: center;
-
+      background: #f5f5f5;
+      padding: 30px;
     }
 
-
-    h2 {
-
-      margin-top: 5px;
-
-      margin-bottom: 20px;
-
+    h1 {
+      color: #333;
     }
-
-
-    #video {
-
-      width: 100%;
-
-      max-width: 650px;
-
-      border-radius: 10px;
-
-      background: #000;
-
-    }
-
-
-    #preview {
-
-      width: 100%;
-
-      max-width: 650px;
-
-      border-radius: 10px;
-
-      display: none;
-
-    }
-
-
-    #canvas {
-
-      display: none;
-
-    }
-
 
     button {
-
+      padding: 15px 25px;
+      font-size: 18px;
       border: none;
-
-      border-radius: 7px;
-
-      padding: 13px 24px;
-
-      margin: 8px;
-
-      font-size: 16px;
-
+      border-radius: 8px;
       cursor: pointer;
-
-    }
-
-
-    #btnFoto {
-
       background: #1a73e8;
-
       color: white;
-
     }
 
-
-    #btnRefazer {
-
-      background: #fbbc04;
-
-      color: #000;
-
+    #video {
       display: none;
-
+      width: 100%;
+      max-width: 600px;
+      margin: 20px auto;
+      border-radius: 10px;
+      background: black;
     }
-
-
-    #btnSalvar {
-
-      background: #188038;
-
-      color: white;
-
-      display: none;
-
-    }
-
-
-    #status {
-
-      font-weight: bold;
-
-      color: #444;
-
-    }
-
 
     #erro {
-
-      color: #d93025;
-
+      color: red;
       font-weight: bold;
-
     }
-
-
   </style>
-
 </head>
-
 
 <body>
 
+  <h1>📷 REG. FOTO</h1>
 
-  <h2>📷 REG. FOTO</h2>
-
+  <button onclick="abrirCamera()">
+    Abrir Câmera
+  </button>
 
   <video
     id="video"
@@ -155,515 +59,60 @@
     playsinline>
   </video>
 
-
-  <img
-    id="preview"
-    alt="Pré-visualização">
-
-
-  <canvas
-    id="canvas">
-  </canvas>
-
-
-  <br>
-
-
-  <button
-    id="btnFoto"
-    onclick="tirarFoto()">
-
-    📸 Tirar Foto
-
-  </button>
-
-
-  <button
-    id="btnRefazer"
-    onclick="refazer()">
-
-    🔄 Refazer
-
-  </button>
-
-
-  <button
-    id="btnSalvar"
-    onclick="salvar()">
-
-    💾 Salvar Foto
-
-  </button>
-
-
-  <p id="status">
-    Inicializando câmera...
-  </p>
-
+  <p id="status"></p>
 
   <p id="erro"></p>
 
 
   <script>
 
+    async function abrirCamera() {
 
-    let stream = null;
+      document.getElementById('status')
+        .innerText = 'Solicitando acesso à câmera...';
 
-    let fotoBase64 = null;
-
-
-    /**
-     * Inicia a câmera.
-     */
-    async function iniciarCamera() {
-
+      document.getElementById('erro')
+        .innerText = '';
 
       try {
 
-
-        if (
-          !navigator.mediaDevices ||
-          !navigator.mediaDevices.getUserMedia
-        ) {
-
-          throw new Error(
-            'Seu navegador não suporta acesso à câmera.'
-          );
-
-        }
-
-
-        stream =
+        const stream =
           await navigator.mediaDevices.getUserMedia({
-
-            video: {
-
-              facingMode: 'user',
-
-              width: {
-                ideal: 1280
-              },
-
-              height: {
-                ideal: 720
-              }
-
-            },
-
+            video: true,
             audio: false
-
           });
-
 
         const video =
           document.getElementById('video');
 
+        video.srcObject = stream;
 
-        video.srcObject =
-          stream;
-
+        video.style.display = 'block';
 
         document.getElementById('status')
-          .innerText =
-          'Câmera pronta.';
-
-
-        document.getElementById('erro')
-          .innerText = '';
-
+          .innerText = '✅ Câmera funcionando!';
 
       }
 
-
       catch (erro) {
-
 
         console.error(erro);
 
+        document.getElementById('status')
+          .innerText = '';
 
-        let mensagem =
-          'Não foi possível acessar a câmera.';
-
-
-        if (
-          erro.name ===
-          'NotAllowedError'
-        ) {
-
-          mensagem =
-            'Acesso à câmera negado. ' +
-            'Clique no cadeado ao lado do endereço ' +
-            'e permita o uso da câmera.';
-
-        }
-
-
-        else if (
-          erro.name ===
-          'NotFoundError'
-        ) {
-
-          mensagem =
-            'Nenhuma câmera foi encontrada.';
-
-        }
-
-
-        else if (
-          erro.name ===
-          'NotReadableError'
-        ) {
-
-          mensagem =
-            'A câmera está sendo usada por outro aplicativo.';
-
-        }
-
-
-        else if (
-          erro.name ===
-          'SecurityError'
-        ) {
-
-          mensagem =
-            'O navegador bloqueou o acesso à câmera.';
-
-        }
-
-
-        else if (erro.message) {
-
-          mensagem =
-            'Erro ao acessar a câmera: ' +
+        document.getElementById('erro')
+          .innerText =
+            'Erro: ' +
+            erro.name +
+            ' - ' +
             erro.message;
 
-        }
-
-
-        document.getElementById('status')
-          .innerText = '';
-
-
-        document.getElementById('erro')
-          .innerText =
-          mensagem;
-
       }
 
     }
-
-
-    /**
-     * Captura a foto.
-     */
-    function tirarFoto() {
-
-
-      const video =
-        document.getElementById('video');
-
-
-      const canvas =
-        document.getElementById('canvas');
-
-
-      const preview =
-        document.getElementById('preview');
-
-
-      if (
-        !stream ||
-        video.videoWidth === 0
-      ) {
-
-        document.getElementById('erro')
-          .innerText =
-          'A câmera ainda não está pronta.';
-
-        return;
-
-      }
-
-
-      canvas.width =
-        video.videoWidth;
-
-
-      canvas.height =
-        video.videoHeight;
-
-
-      const ctx =
-        canvas.getContext('2d');
-
-
-      ctx.drawImage(
-
-        video,
-
-        0,
-
-        0,
-
-        canvas.width,
-
-        canvas.height
-
-      );
-
-
-      fotoBase64 =
-        canvas.toDataURL(
-          'image/png'
-        );
-
-
-      preview.src =
-        fotoBase64;
-
-
-      video.style.display =
-        'none';
-
-
-      preview.style.display =
-        'inline-block';
-
-
-      document.getElementById(
-        'btnFoto'
-      ).style.display =
-        'none';
-
-
-      document.getElementById(
-        'btnRefazer'
-      ).style.display =
-        'inline-block';
-
-
-      document.getElementById(
-        'btnSalvar'
-      ).style.display =
-        'inline-block';
-
-
-      document.getElementById('status')
-        .innerText =
-        'Confira a foto antes de salvar.';
-
-    }
-
-
-    /**
-     * Refaz a foto.
-     */
-    function refazer() {
-
-
-      fotoBase64 =
-        null;
-
-
-      document.getElementById('video')
-        .style.display =
-        'block';
-
-
-      document.getElementById('preview')
-        .style.display =
-        'none';
-
-
-      document.getElementById('btnFoto')
-        .style.display =
-        'inline-block';
-
-
-      document.getElementById('btnRefazer')
-        .style.display =
-        'none';
-
-
-      document.getElementById('btnSalvar')
-        .style.display =
-        'none';
-
-
-      document.getElementById('status')
-        .innerText =
-        'Câmera pronta.';
-
-
-      document.getElementById('erro')
-        .innerText =
-        '';
-
-    }
-
-
-    /**
-     * Envia a foto para o Apps Script.
-     */
-    async function salvar() {
-
-
-      if (!fotoBase64) {
-
-        document.getElementById('erro')
-          .innerText =
-          'Nenhuma foto foi capturada.';
-
-        return;
-
-      }
-
-
-      document.getElementById('status')
-        .innerText =
-        'Preparando foto...';
-
-
-      document.getElementById('btnSalvar')
-        .disabled =
-        true;
-
-
-      try {
-
-
-        /*
-         * Envia a imagem para o Apps Script
-         * através de uma requisição POST.
-         */
-
-        const resposta =
-          await fetch(
-            'https://script.google.com/macros/s/AKfycbyDLary__sty80fnjSfGN_JZAxxLzn6eR20AlUbfU6G1WXLPLBxxGP2z1AgdfgtbEPKcQ/exec',
-            {
-
-              method: 'POST',
-
-              headers: {
-
-                'Content-Type':
-                  'text/plain'
-
-              },
-
-              body:
-                fotoBase64
-
-            }
-          );
-
-
-        const resultado =
-          await resposta.text();
-
-
-        if (
-          resultado !== 'OK'
-        ) {
-
-          throw new Error(
-            resultado
-          );
-
-        }
-
-
-        document.getElementById('status')
-          .innerText =
-          '✅ Foto salva com sucesso!';
-
-
-        pararCamera();
-
-
-        setTimeout(
-          function() {
-
-            window.close();
-
-          },
-          1200
-        );
-
-
-      }
-
-
-      catch (erro) {
-
-
-        console.error(erro);
-
-
-        document.getElementById('status')
-          .innerText =
-          'Erro ao salvar a foto.';
-
-
-        document.getElementById('erro')
-          .innerText =
-          erro.message;
-
-
-        document.getElementById('btnSalvar')
-          .disabled =
-          false;
-
-      }
-
-    }
-
-
-    /**
-     * Para a câmera.
-     */
-    function pararCamera() {
-
-
-      if (stream) {
-
-
-        stream
-          .getTracks()
-          .forEach(
-            function(track) {
-
-              track.stop();
-
-            }
-          );
-
-
-        stream =
-          null;
-
-      }
-
-    }
-
-
-    /**
-     * Ao fechar a página.
-     */
-    window.addEventListener(
-      'beforeunload',
-      pararCamera
-    );
-
-
-    /**
-     * Inicia câmera.
-     */
-    iniciarCamera();
-
 
   </script>
-
 
 </body>
 
