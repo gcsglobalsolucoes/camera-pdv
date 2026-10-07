@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 
 <head>
@@ -11,67 +12,144 @@
 
   <title>REG. FOTO</title>
 
+
   <style>
 
     body {
+
       font-family: Arial, sans-serif;
+
       text-align: center;
+
       background: #f5f5f5;
+
       margin: 0;
-      padding: 25px;
+
+      padding: 20px;
+
     }
+
 
     h1 {
-      margin-bottom: 20px;
+
+      margin-bottom: 15px;
+
     }
+
 
     #video {
+
       width: 100%;
+
       max-width: 700px;
-      background: #000;
+
       border-radius: 10px;
-      display: none;
+
+      background: #000;
+
     }
+
+
+    #preview {
+
+      width: 100%;
+
+      max-width: 700px;
+
+      border-radius: 10px;
+
+      display: none;
+
+    }
+
+
+    #canvas {
+
+      display: none;
+
+    }
+
 
     button {
-      padding: 14px 25px;
-      margin: 10px;
+
+      padding: 13px 22px;
+
+      margin: 7px;
+
       border: none;
+
       border-radius: 7px;
-      font-size: 17px;
+
+      font-size: 16px;
+
       cursor: pointer;
-      background: #1a73e8;
-      color: white;
+
     }
 
-    button:hover {
-      background: #1557b0;
+
+    #btnFoto {
+
+      background: #1a73e8;
+
+      color: white;
+
     }
+
+
+    #btnRefazer {
+
+      background: #fbbc04;
+
+      display: none;
+
+    }
+
+
+    #btnSalvar {
+
+      background: #188038;
+
+      color: white;
+
+      display: none;
+
+    }
+
 
     #status {
+
       font-weight: bold;
-      margin-top: 15px;
+
     }
 
+
     #erro {
+
       color: #d93025;
+
       font-weight: bold;
-      margin-top: 15px;
+
+    }
+
+
+    #carregando {
+
+      display: none;
+
+      font-weight: bold;
+
     }
 
   </style>
 
 </head>
 
+
 <body>
+
 
   <h1>📷 REG. FOTO</h1>
 
-  <button onclick="abrirCamera()">
-    📷 Abrir Câmera
-  </button>
-
-  <br>
 
   <video
     id="video"
@@ -79,17 +157,117 @@
     playsinline>
   </video>
 
-  <p id="status"></p>
+
+  <img
+    id="preview"
+    alt="Pré-visualização da foto">
+
+
+  <canvas
+    id="canvas">
+  </canvas>
+
+
+  <div>
+
+    <button
+      id="btnFoto"
+      onclick="tirarFoto()">
+
+      📸 Tirar Foto
+
+    </button>
+
+
+    <button
+      id="btnRefazer"
+      onclick="refazer()">
+
+      🔄 Refazer
+
+    </button>
+
+
+    <button
+      id="btnSalvar"
+      onclick="salvar()">
+
+      💾 Salvar Foto
+
+    </button>
+
+  </div>
+
+
+  <p id="status">
+    Câmera inicializando...
+  </p>
+
 
   <p id="erro"></p>
 
 
+  <p id="carregando">
+    ⏳ Salvando foto no Google Drive...
+  </p>
+
+
+  <!--
+    Este iframe ficará invisível.
+    Ele recebe a resposta do Apps Script.
+  -->
+
+  <iframe
+    name="retornoAppsScript"
+    id="retornoAppsScript"
+    style="display:none;">
+  </iframe>
+
+
+  <!--
+    Formulário usado para enviar a imagem
+    ao Apps Script sem depender de CORS.
+  -->
+
+  <form
+    id="formUpload"
+    method="POST"
+    target="retornoAppsScript"
+    style="display:none;">
+
+    <input
+      type="hidden"
+      name="imagem"
+      id="imagemInput">
+
+  </form>
+
+
   <script>
+
+
+    // =====================================================
+    // CONFIGURAÇÃO
+    // =====================================================
+
+    const APPS_SCRIPT_URL =
+      'https://script.google.com/macros/s/AKfycbyDLary__sty80fnjSfGN_JZAxxLzn6eR20AlUbfU6G1WXLPLBxxGP2z1AgdfgtbEPKcQ/exec';
+
+
+    // =====================================================
+    // VARIÁVEIS
+    // =====================================================
 
     let stream = null;
 
+    let fotoBase64 = null;
 
-    async function abrirCamera() {
+
+    // =====================================================
+    // INICIALIZA CÂMERA
+    // =====================================================
+
+    async function iniciarCamera() {
 
       const status =
         document.getElementById('status');
@@ -97,55 +275,52 @@
       const erro =
         document.getElementById('erro');
 
-      const video =
-        document.getElementById('video');
-
-
-      status.innerText =
-        'Solicitando acesso à câmera...';
-
-      erro.innerText = '';
-
 
       try {
-
-        if (
-          !navigator.mediaDevices ||
-          !navigator.mediaDevices.getUserMedia
-        ) {
-
-          throw new Error(
-            'O navegador não disponibilizou a câmera.'
-          );
-
-        }
 
 
         stream =
           await navigator.mediaDevices.getUserMedia({
 
-            video: true,
+            video: {
+
+              facingMode: 'user',
+
+              width: {
+                ideal: 1280
+              },
+
+              height: {
+                ideal: 720
+              }
+
+            },
 
             audio: false
 
           });
 
 
+        const video =
+          document.getElementById('video');
+
+
         video.srcObject =
           stream;
 
 
-        video.style.display =
-          'block';
-
-
         status.innerText =
-          '✅ Câmera funcionando!';
+          '✅ Câmera pronta.';
+
+
+        erro.innerText = '';
 
 
       }
 
+
       catch (e) {
+
 
         console.error(e);
 
@@ -153,17 +328,442 @@
         status.innerText = '';
 
 
-        erro.innerText =
-          'Erro: ' +
-          e.name +
-          ' - ' +
-          e.message;
+        if (
+          e.name === 'NotAllowedError'
+        ) {
+
+          erro.innerText =
+            'Acesso à câmera negado. ' +
+            'Permita o acesso à câmera no navegador.';
+
+        }
+
+        else if (
+          e.name === 'NotFoundError'
+        ) {
+
+          erro.innerText =
+            'Nenhuma câmera foi encontrada.';
+
+        }
+
+        else if (
+          e.name === 'NotReadableError'
+        ) {
+
+          erro.innerText =
+            'A câmera está sendo usada por outro aplicativo.';
+
+        }
+
+        else {
+
+          erro.innerText =
+            'Erro ao acessar a câmera: ' +
+            e.message;
+
+        }
 
       }
 
     }
 
+
+    // =====================================================
+    // TIRAR FOTO
+    // =====================================================
+
+    function tirarFoto() {
+
+
+      const video =
+        document.getElementById('video');
+
+
+      const canvas =
+        document.getElementById('canvas');
+
+
+      const preview =
+        document.getElementById('preview');
+
+
+      if (
+        !stream ||
+        video.videoWidth === 0
+      ) {
+
+        document.getElementById('erro')
+          .innerText =
+          'A câmera ainda não está pronta.';
+
+        return;
+
+      }
+
+
+      canvas.width =
+        video.videoWidth;
+
+
+      canvas.height =
+        video.videoHeight;
+
+
+      const ctx =
+        canvas.getContext('2d');
+
+
+      ctx.drawImage(
+
+        video,
+
+        0,
+
+        0,
+
+        canvas.width,
+
+        canvas.height
+
+      );
+
+
+      /*
+       * JPEG reduz bastante o tamanho
+       * comparado ao PNG.
+       */
+
+      fotoBase64 =
+        canvas.toDataURL(
+          'image/jpeg',
+          0.85
+        );
+
+
+      preview.src =
+        fotoBase64;
+
+
+      video.style.display =
+        'none';
+
+
+      preview.style.display =
+        'block';
+
+
+      document.getElementById(
+        'btnFoto'
+      ).style.display =
+        'none';
+
+
+      document.getElementById(
+        'btnRefazer'
+      ).style.display =
+        'inline-block';
+
+
+      document.getElementById(
+        'btnSalvar'
+      ).style.display =
+        'inline-block';
+
+
+      document.getElementById('status')
+        .innerText =
+        'Confira a foto antes de salvar.';
+
+    }
+
+
+    // =====================================================
+    // REFAZER
+    // =====================================================
+
+    function refazer() {
+
+
+      fotoBase64 =
+        null;
+
+
+      document.getElementById('video')
+        .style.display =
+        'block';
+
+
+      document.getElementById('preview')
+        .style.display =
+        'none';
+
+
+      document.getElementById('btnFoto')
+        .style.display =
+        'inline-block';
+
+
+      document.getElementById('btnRefazer')
+        .style.display =
+        'none';
+
+
+      document.getElementById('btnSalvar')
+        .style.display =
+        'none';
+
+
+      document.getElementById('status')
+        .innerText =
+        'Câmera pronta.';
+
+
+      document.getElementById('erro')
+        .innerText =
+        '';
+
+    }
+
+
+    // =====================================================
+    // SALVAR
+    // =====================================================
+
+    function salvar() {
+
+
+      if (!fotoBase64) {
+
+        return;
+
+      }
+
+
+      /*
+       * Confere se a URL foi configurada.
+       */
+
+      if (
+        APPS_SCRIPT_URL.indexOf(
+          'COLE_AQUI'
+        ) !== -1
+      ) {
+
+        document.getElementById('erro')
+          .innerText =
+          'A URL do Apps Script ainda não foi configurada.';
+
+        return;
+
+      }
+
+
+      document.getElementById('btnSalvar')
+        .disabled =
+        true;
+
+
+      document.getElementById('btnRefazer')
+        .disabled =
+        true;
+
+
+      document.getElementById('carregando')
+        .style.display =
+        'block';
+
+
+      document.getElementById('status')
+        .innerText =
+        '';
+
+
+      /*
+       * Coloca Base64 no formulário.
+       */
+
+      document.getElementById(
+        'imagemInput'
+      ).value =
+        fotoBase64;
+
+
+      /*
+       * Define o endereço do Apps Script.
+       */
+
+      document.getElementById(
+        'formUpload'
+      ).action =
+        APPS_SCRIPT_URL;
+
+
+      /*
+       * Envia.
+       */
+
+      document.getElementById(
+        'formUpload'
+      ).submit();
+
+    }
+
+
+    // =====================================================
+    // RECEBE RESPOSTA DO APPS SCRIPT
+    // =====================================================
+
+    window.addEventListener(
+      'message',
+      function(event) {
+
+
+        if (!event.data) {
+
+          return;
+
+        }
+
+
+        // -----------------------------------------------
+        // FOTO SALVA
+        // -----------------------------------------------
+
+        if (
+          event.data.tipo ===
+          'foto_salva'
+        ) {
+
+
+          document.getElementById(
+            'carregando'
+          ).style.display =
+            'none';
+
+
+          document.getElementById(
+            'status'
+          ).innerText =
+            '✅ Foto salva com sucesso!';
+
+
+          document.getElementById(
+            'erro'
+          ).innerText =
+            '';
+
+
+          pararCamera();
+
+
+          /*
+           * Fecha a aba automaticamente
+           * após salvar.
+           */
+
+          setTimeout(
+            function() {
+
+              window.close();
+
+            },
+            1200
+          );
+
+        }
+
+
+        // -----------------------------------------------
+        // ERRO
+        // -----------------------------------------------
+
+        if (
+          event.data.tipo ===
+          'erro'
+        ) {
+
+
+          document.getElementById(
+            'carregando'
+          ).style.display =
+            'none';
+
+
+          document.getElementById(
+            'status'
+          ).innerText =
+            '';
+
+
+          document.getElementById(
+            'erro'
+          ).innerText =
+            'Erro ao salvar: ' +
+            event.data.mensagem;
+
+
+          document.getElementById(
+            'btnSalvar'
+          ).disabled =
+            false;
+
+
+          document.getElementById(
+            'btnRefazer'
+          ).disabled =
+            false;
+
+        }
+
+      }
+    );
+
+
+    // =====================================================
+    // PARA CÂMERA
+    // =====================================================
+
+    function pararCamera() {
+
+
+      if (stream) {
+
+
+        stream
+          .getTracks()
+          .forEach(
+            function(track) {
+
+              track.stop();
+
+            }
+          );
+
+
+        stream =
+          null;
+
+      }
+
+    }
+
+
+    // =====================================================
+    // INÍCIO
+    // =====================================================
+
+    iniciarCamera();
+
+
+    window.addEventListener(
+      'beforeunload',
+      pararCamera
+    );
+
+
   </script>
+
 
 </body>
 
