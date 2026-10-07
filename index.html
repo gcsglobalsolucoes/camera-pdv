@@ -614,111 +614,121 @@
     // RECEBE RESPOSTA DO APPS SCRIPT
     // =====================================================
 
-    window.addEventListener(
-      'message',
-      function(event) {
+   window.addEventListener(
+  'message',
+  function(event) {
 
-
-        if (!event.data) {
-
-          return;
-
-        }
-
-
-        // -----------------------------------------------
-        // FOTO SALVA
-        // -----------------------------------------------
-
-        if (
-          event.data.tipo ===
-          'foto_salva'
-        ) {
-
-
-          document.getElementById(
-            'carregando'
-          ).style.display =
-            'none';
-
-
-          document.getElementById(
-            'status'
-          ).innerText =
-            '✅ Foto salva com sucesso!';
-
-
-          document.getElementById(
-            'erro'
-          ).innerText =
-            '';
-
-
-          pararCamera();
-
-
-          /*
-           * Fecha a aba automaticamente
-           * após salvar.
-           */
-
-          setTimeout(
-            function() {
-
-              window.close();
-
-            },
-            1200
-          );
-
-        }
-
-
-        // -----------------------------------------------
-        // ERRO
-        // -----------------------------------------------
-
-        if (
-          event.data.tipo ===
-          'erro'
-        ) {
-
-
-          document.getElementById(
-            'carregando'
-          ).style.display =
-            'none';
-
-
-          document.getElementById(
-            'status'
-          ).innerText =
-            '';
-
-
-          document.getElementById(
-            'erro'
-          ).innerText =
-            'Erro ao salvar: ' +
-            event.data.mensagem;
-
-
-          document.getElementById(
-            'btnSalvar'
-          ).disabled =
-            false;
-
-
-          document.getElementById(
-            'btnRefazer'
-          ).disabled =
-            false;
-
-        }
-
-      }
+    console.log(
+      'Mensagem recebida:',
+      event.data
     );
 
+
+    if (!event.data) {
+      return;
+    }
+
+
+    // ==========================================
+    // FOTO SALVA
+    // ==========================================
+
+    if (
+      event.data.tipo ===
+      'foto_salva'
+    ) {
+
+      document.getElementById(
+        'carregando'
+      ).style.display =
+        'none';
+
+
+      document.getElementById(
+        'status'
+      ).innerText =
+        '✅ Foto salva com sucesso!';
+
+
+      document.getElementById(
+        'erro'
+      ).innerText =
+        '';
+
+
+      document.getElementById(
+        'btnSalvar'
+      ).disabled =
+        false;
+
+
+      document.getElementById(
+        'btnRefazer'
+      ).disabled =
+        false;
+
+
+      pararCamera();
+
+
+      /*
+       * Fecha a aba depois de 1,5 segundo.
+       */
+      setTimeout(
+        function() {
+
+          window.close();
+
+        },
+        1500
+      );
+
+    }
+
+
+    // ==========================================
+    // ERRO
+    // ==========================================
+
+    if (
+      event.data.tipo ===
+      'erro'
+    ) {
+
+      document.getElementById(
+        'carregando'
+      ).style.display =
+        'none';
+
+
+      document.getElementById(
+        'status'
+      ).innerText =
+        '';
+
+
+      document.getElementById(
+        'erro'
+      ).innerText =
+        '❌ Erro ao salvar: ' +
+        event.data.mensagem;
+
+
+      document.getElementById(
+        'btnSalvar'
+      ).disabled =
+        false;
+
+
+      document.getElementById(
+        'btnRefazer'
+      ).disabled =
+        false;
+
+    }
+
+  }
+);
 
     // =====================================================
     // PARA CÂMERA
